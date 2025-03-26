@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Contactos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Agenda de Contactos</h1>
+    
+    <div>
+        <h2>Agregar Contacto</h2>
+        <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" required>
+        </div>
+        <div class="form-group">
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" required>
+        </div>
+        <div class="form-group">
+            <label for="telefono">Teléfono:</label>
+            <input type="text" id="telefono" required>
+        </div>
+        <button onclick="addContact()">Guardar Contacto</button>
+    </div>
+    
+    <div>
+        <h2>Lista de Contactos</h2>
+        <button onclick="loadContacts()">Actualizar Lista</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Teléfono</th>
+                </tr>
+            </thead>
+            <tbody id="contactsList">
+                <!-- Contacts will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Load contacts when page loads
+        document.addEventListener('DOMContentLoaded', loadContacts);
+
+        // Function to load contacts
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/contacts');
+                const contacts = await response.json();
+                
+                const contactsList = document.getElementById('contactsList');
+                contactsList.innerHTML = '';
+                
+                contacts.forEach(contact => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${contact.nombre}</td>
+                        <td>${contact.apellido}</td>
+                        <td>${contact.telefono}</td>
+                    `;
+                    contactsList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                alert('Error loading contacts. Please try again.');
+            }
+        }
+
+        // Function to add a new contact
+        async function addContact() {
+            const nombre = document.getElementById('nombre').value;
+            const apellido = document.getElementById('apellido').value;
+            const telefono = document.getElementById('telefono').value;
+            
+            if (!nombre || !apellido || !telefono) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre, apellido, telefono })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Contact added successfully!');
+                    // Clear form
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('apellido').value = '';
+                    document.getElementById('telefono').value = '';
+                    // Reload contacts
+                    loadContacts();
+                } else {
+                    alert(`Error: ${result.error || 'Failed to add contact'}`);
+                }
+            } catch (error) {
+                console.error('Error adding contact:', error);
+                alert('Error adding contact. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
